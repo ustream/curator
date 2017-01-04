@@ -1,0 +1,5 @@
+buildrunner: 
+  script: mvn clean package
+releaserunner: 
+  script: mvn clean package
+environment_image: sjc-docker-registry.ustream-adm.in/build-tools/ci-base-images/jvm-trusty:latest
