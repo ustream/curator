@@ -66,7 +66,6 @@ public class NDPENode implements Closeable
     private final AtomicReference<byte[]> data = new AtomicReference<byte[]>();
     private final AtomicReference<State> state = new AtomicReference<State>(State.LATENT);
     private final BackgroundCallback backgroundCallback;
-    private final boolean useProtection;
     private final AtomicBoolean allowedToOverwrite = new AtomicBoolean(false);
     private final CuratorWatcher watcher = new CuratorWatcher()
     {
@@ -163,13 +162,11 @@ public class NDPENode implements Closeable
 
     /**
      * @param client        client instance
-     * @param useProtection if true, call {@link CreateBuilder#withProtection()}
      * @param basePath the base path for the node
      * @param initData data for the node
      */
-    public NDPENode(CuratorFramework client, boolean useProtection, final String basePath, byte[] initData)
+    public NDPENode(CuratorFramework client, final String basePath, byte[] initData)
     {
-        this.useProtection = useProtection;
         this.client = Preconditions.checkNotNull(client, "client cannot be null");
         this.basePath = PathUtils.validatePath(basePath);
         final byte[] data = Preconditions.checkNotNull(initData, "data cannot be null");
@@ -190,7 +187,7 @@ public class NDPENode implements Closeable
             }
         };
 
-        createMethod = useProtection ? client.create().creatingParentContainersIfNeeded().withProtection() : client.create().creatingParentContainersIfNeeded();
+        createMethod = client.create().creatingParentContainersIfNeeded();
         this.data.set(Arrays.copyOf(data, data.length));
     }
 
@@ -330,7 +327,7 @@ public class NDPENode implements Closeable
         try
         {
             String existingPath = nodePath.get();
-            String createPath = (existingPath != null && !useProtection) ? existingPath : basePath;
+            String createPath = existingPath != null ? existingPath : basePath;
             createMethod.withMode(CreateMode.EPHEMERAL).inBackground(backgroundCallback).forPath(createPath, data.get());
         }
         catch ( Exception e )
