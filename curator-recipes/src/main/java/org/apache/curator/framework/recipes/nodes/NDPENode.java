@@ -65,7 +65,6 @@ public class NDPENode implements Closeable
     private final String basePath;
     private final AtomicReference<byte[]> data = new AtomicReference<byte[]>();
     private final AtomicReference<State> state = new AtomicReference<State>(State.LATENT);
-    private final AtomicBoolean authFailure = new AtomicBoolean(false);
     private final BackgroundCallback backgroundCallback;
     private final boolean useProtection;
     private final AtomicBoolean allowedToOverwrite = new AtomicBoolean(false);
@@ -232,19 +231,11 @@ public class NDPENode implements Closeable
         if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
         {
             String path = event.getName();
-            authFailure.set(false);
             nodePath.set(path);
             allowedToOverwrite.set(true);
             watchNode();
 
             initialisationComplete();
-            return;
-        }
-
-        if ( event.getResultCode() == KeeperException.Code.NOAUTH.intValue() )
-        {
-            log.warn("Client does not have authorisation to write node at path {}", event.getPath());
-            authFailure.set(true);
             return;
         }
 
@@ -366,11 +357,5 @@ public class NDPENode implements Closeable
     private boolean isActive()
     {
         return (state.get() == State.STARTED);
-    }
-
-    @VisibleForTesting
-    boolean isAuthFailure()
-    {
-        return authFailure.get();
     }
 }
