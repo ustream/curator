@@ -69,6 +69,7 @@ public class NDPENode implements Closeable
     private final AtomicBoolean authFailure = new AtomicBoolean(false);
     private final BackgroundCallback backgroundCallback;
     private final boolean useProtection;
+    private final AtomicBoolean allowedToOverwrite = new AtomicBoolean(false);
     private final CuratorWatcher watcher = new CuratorWatcher()
     {
         @Override
@@ -186,7 +187,7 @@ public class NDPENode implements Closeable
             path = event.getName();
         }
 
-        if ( path != null )
+        if ( path != null && allowedToOverwrite.get() )
         {
             try
             {
@@ -226,7 +227,10 @@ public class NDPENode implements Closeable
 
             if ( nodeExists )
             {
-                client.setData().inBackground(setDataCallback).forPath(getActualPath(), getData());
+                if ( allowedToOverwrite.get() )
+                {
+                    client.setData().inBackground(setDataCallback).forPath(getActualPath(), getData());
+                }
             }
             else
             {
@@ -246,6 +250,7 @@ public class NDPENode implements Closeable
         {
             localLatch.countDown();
         }
+        allowedToOverwrite.set(true);
     }
 
     /**
@@ -287,14 +292,17 @@ public class NDPENode implements Closeable
 
         client.getConnectionStateListenable().removeListener(connectionStateListener);
 
-        try
+        if ( allowedToOverwrite.get() )
         {
-            deleteNode();
-        }
-        catch ( Exception e )
-        {
-            ThreadUtils.checkInterrupted(e);
-            throw new IOException(e);
+            try
+            {
+                deleteNode();
+            }
+            catch (Exception e)
+            {
+                ThreadUtils.checkInterrupted(e);
+                throw new IOException(e);
+            }
         }
     }
 
