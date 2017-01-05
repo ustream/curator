@@ -313,16 +313,6 @@ public class NDPENode implements Closeable
         }
     }
 
-    /**
-     * Returns the currently set path or null if the node does not exist
-     *
-     * @return node path or null
-     */
-    public String getActualPath()
-    {
-        return nodePath.get();
-    }
-
     private void deleteNode() throws Exception
     {
         String localNodePath = nodePath.getAndSet(null);
