@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class NDPENode implements Closeable
 {
-    private final AtomicReference<CountDownLatch> initialCreateLatch = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
+    private final AtomicReference<InitialCreateLatch> initialCreateLatch = new AtomicReference<InitialCreateLatch>(new InitialCreateLatch());
     private final Logger log = LoggerFactory.getLogger(getClass());
     private final CuratorFramework client;
     private final CreateModable<ACLBackgroundPathAndBytesable<String>> createMethod;
@@ -132,6 +132,44 @@ public class NDPENode implements Closeable
             }
         }
     };
+
+    private static class InitialCreateLatch
+    {
+        private final CountDownLatch countDownLatch = new CountDownLatch(1);
+        private final AtomicBoolean nodeExists = new AtomicBoolean(false);
+
+        private void nodeExists()
+        {
+            nodeExists.set(true);
+            countDown();
+        }
+
+        private void countDown()
+        {
+            countDownLatch.countDown();
+        }
+
+        private CreateError await(final long timeout, final TimeUnit unit) throws InterruptedException
+        {
+            final boolean success = countDownLatch.await(timeout, unit);
+            if ( success )
+            {
+                return CreateError.NONE;
+            }
+            if ( nodeExists.get() )
+            {
+                return CreateError.NODE_EXISTS;
+            }
+            return CreateError.TIMEOUT;
+        }
+    }
+
+    public enum CreateError
+    {
+        NONE,
+        NODE_EXISTS,
+        TIMEOUT
+    }
 
     private enum State
     {
@@ -245,7 +283,7 @@ public class NDPENode implements Closeable
 
     private void initialisationComplete()
     {
-        CountDownLatch localLatch = initialCreateLatch.getAndSet(null);
+        InitialCreateLatch localLatch = initialCreateLatch.getAndSet(null);
         if ( localLatch != null )
         {
             localLatch.countDown();
@@ -274,12 +312,12 @@ public class NDPENode implements Closeable
      * @return if the node was created before timeout
      * @throws InterruptedException if the thread is interrupted
      */
-    public boolean waitForInitialCreate(long timeout, TimeUnit unit) throws InterruptedException
+    public CreateError waitForInitialCreate(long timeout, TimeUnit unit) throws InterruptedException
     {
         Preconditions.checkState(state.get() == State.STARTED, "Not started");
 
-        CountDownLatch localLatch = initialCreateLatch.get();
-        return (localLatch == null) || localLatch.await(timeout, unit);
+        InitialCreateLatch localLatch = initialCreateLatch.get();
+        return localLatch == null ? CreateError.NONE : localLatch.await(timeout, unit);
     }
 
     @Override
