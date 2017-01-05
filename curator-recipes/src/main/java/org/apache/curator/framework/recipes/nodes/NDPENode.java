@@ -103,23 +103,6 @@ public class NDPENode implements Closeable
             }
         }
     };
-    private final BackgroundCallback setDataCallback = new BackgroundCallback()
-    {
-
-        @Override
-        public void processResult(CuratorFramework client, CuratorEvent event)
-            throws Exception
-        {
-            //If the result is ok then initialisation is complete (if we're still initialising)
-            //Don't retry on other errors as the only recoverable cases will be connection loss
-            //and the node not existing, both of which are already handled by other watches.
-            if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
-            {
-                //Update is ok, mark initialisation as complete if required.
-                initialisationComplete();
-            }
-        }
-    };
     private final ConnectionStateListener connectionStateListener = new ConnectionStateListener()
     {
         @Override
@@ -338,36 +321,6 @@ public class NDPENode implements Closeable
     public String getActualPath()
     {
         return nodePath.get();
-    }
-
-    /**
-     * Set data that node should set in ZK also writes the data to the node. NOTE: it
-     * is an error to call this method after {@link #start()} but before the initial create
-     * has completed. Use {@link #waitForInitialCreate(long, TimeUnit)} to ensure initial
-     * creation.
-     *
-     * @param data new data value
-     * @throws Exception errors
-     */
-    public void setData(byte[] data) throws Exception
-    {
-        data = Preconditions.checkNotNull(data, "data cannot be null");
-        Preconditions.checkState(nodePath.get() != null, "initial create has not been processed. Call waitForInitialCreate() to ensure.");
-        this.data.set(Arrays.copyOf(data, data.length));
-        if ( isActive() )
-        {
-            client.setData().inBackground().forPath(getActualPath(), getData());
-        }
-    }
-
-    /**
-     * Return the current value of our data
-     *
-     * @return our data
-     */
-    public byte[] getData()
-    {
-        return this.data.get();
     }
 
     private void deleteNode() throws Exception
