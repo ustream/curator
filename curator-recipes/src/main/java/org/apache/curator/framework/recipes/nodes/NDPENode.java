@@ -45,13 +45,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * <p>
- * A persistent node is a node that attempts to stay present in
- * ZooKeeper, even through connection and session interruptions.
- * </p>
- * <p>
- * Thanks to bbeck (https://github.com/bbeck) for the initial coding and design
- * </p>
+ * <p>A Non-Destructive, Persistent Ephemeral Node</p>
+ * <ul>
+ *  <li>Non-Destructive, because it doesn't overwrite / delete an already existing node at the specified path</li>
+ *  <li>Persistent, because it attempts to stay present in Zookeeper, even through connection and session interruptions</li>
+ *  <li>Ephemeral, because it is created with {@link CreateMode#EPHEMERAL} and gets deleted after the specified session timeout</li>
+ * </ul>
+ * <p>Based on {@link PersistentNode}</p>
+ * <p>Thanks to bbeck (https://github.com/bbeck) for the initial coding and design</p>
  */
 public class NDPENode implements Closeable
 {
@@ -259,12 +260,18 @@ public class NDPENode implements Closeable
     }
 
     /**
-     * Block until the either initial node creation initiated by {@link #start()} succeeds or
-     * the timeout elapses.
+     * Block until initial node creation initiated by {@link #start()} either
+     * <ul>
+     *     <li>succeeds, or</li>
+     *     <li>fails because the node at the specified path already exists, or</li>
+     *     <li>the timeout elapses.</li>
+     * </ul>
      *
      * @param timeout the maximum time to wait
      * @param unit    time unit
-     * @return if the node was created before timeout
+     * @return {@link CreateError#NONE} if the node was created before timeout
+     *         {@link CreateError#NODE_EXISTS} if the node was not created because a node already exists at the specified path
+     *         {@link CreateError#TIMEOUT} if the node was not created before timeout for any other reason
      * @throws InterruptedException if the thread is interrupted
      */
     public CreateError waitForInitialCreate(long timeout, TimeUnit unit) throws InterruptedException
