@@ -234,6 +234,7 @@ public class NDPENode implements Closeable
             String path = event.getName();
             authFailure.set(false);
             nodePath.set(path);
+            allowedToOverwrite.set(true);
             watchNode();
 
             initialisationComplete();
@@ -257,7 +258,6 @@ public class NDPENode implements Closeable
         {
             localLatch.countDown();
         }
-        allowedToOverwrite.set(true);
     }
 
     /**
