@@ -220,7 +220,10 @@ public class NDPENode implements Closeable
         if ( event.getResultCode() == KeeperException.Code.NODEEXISTS.intValue() )
         {
             InitialCreateLatch localLatch = initialCreateLatch.get();
-            localLatch.nodeExists();
+            if ( localLatch != null )
+            {
+                localLatch.nodeExists();
+            }
             return;
         }
 
