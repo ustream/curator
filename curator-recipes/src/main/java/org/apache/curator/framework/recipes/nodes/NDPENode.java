@@ -135,7 +135,7 @@ public class NDPENode implements Closeable
 
     private static class InitialCreateLatch
     {
-        private final CountDownLatch countDownLatch = new CountDownLatch(1);
+        private final AtomicReference<CountDownLatch> countDownLatch = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
         private final AtomicBoolean nodeExists = new AtomicBoolean(false);
 
         private void nodeExists()
@@ -146,12 +146,14 @@ public class NDPENode implements Closeable
 
         private void countDown()
         {
-            countDownLatch.countDown();
+            CountDownLatch localLatch = countDownLatch.get();
+            localLatch.countDown();
         }
 
         private CreateError await(final long timeout, final TimeUnit unit) throws InterruptedException
         {
-            final boolean success = countDownLatch.await(timeout, unit);
+            CountDownLatch localLatch = countDownLatch.get();
+            final boolean success = localLatch.await(timeout, unit);
             if ( success )
             {
                 return CreateError.NONE;
