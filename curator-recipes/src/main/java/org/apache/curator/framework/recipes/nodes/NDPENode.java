@@ -132,16 +132,22 @@ public class NDPENode implements Closeable
         private CreateError await(final long timeout, final TimeUnit unit) throws InterruptedException
         {
             CountDownLatch localLatch = countDownLatch.get();
-            final boolean success = localLatch.await(timeout, unit);
-            if ( success )
+            final boolean gotResultBeforeTimeout = localLatch.await(timeout, unit);
+            if ( gotResultBeforeTimeout )
             {
-                return CreateError.NONE;
+                if ( nodeExists.get() )
+                {
+                    return CreateError.NODE_EXISTS;
+                }
+                else
+                {
+                    return CreateError.NONE;
+                }
             }
-            if ( nodeExists.get() )
+            else
             {
-                return CreateError.NODE_EXISTS;
+                return CreateError.TIMEOUT;
             }
-            return CreateError.TIMEOUT;
         }
     }
 
