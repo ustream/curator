@@ -240,45 +240,32 @@ public class NDPENode implements Closeable
 
     private void processBackgroundCallback(CuratorEvent event) throws Exception
     {
-        String path = null;
-        boolean nodeExists = false;
         if ( event.getResultCode() == KeeperException.Code.NODEEXISTS.intValue() )
         {
-            path = event.getPath();
-            nodeExists = true;
+            InitialCreateLatch localLatch = initialCreateLatch.get();
+            localLatch.nodeExists();
+            return;
         }
-        else if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
+
+        if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
         {
-            path = event.getName();
+            String path = event.getName();
+            authFailure.set(false);
+            nodePath.set(path);
+            watchNode();
+
+            initialisationComplete();
+            return;
         }
-        else if ( event.getResultCode() == KeeperException.Code.NOAUTH.intValue() )
+
+        if ( event.getResultCode() == KeeperException.Code.NOAUTH.intValue() )
         {
             log.warn("Client does not have authorisation to write node at path {}", event.getPath());
             authFailure.set(true);
             return;
         }
-        if ( path != null )
-        {
-            authFailure.set(false);
-            nodePath.set(path);
-            watchNode();
 
-            if ( nodeExists )
-            {
-                if ( allowedToOverwrite.get() )
-                {
-                    client.setData().inBackground(setDataCallback).forPath(getActualPath(), getData());
-                }
-            }
-            else
-            {
-                initialisationComplete();
-            }
-        }
-        else
-        {
-            createNode();
-        }
+        createNode();
     }
 
     private void initialisationComplete()
