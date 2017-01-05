@@ -63,7 +63,6 @@ public class NDPENode implements Closeable
     private final CreateModable<ACLBackgroundPathAndBytesable<String>> createMethod;
     private final AtomicReference<String> nodePath = new AtomicReference<String>(null);
     private final String basePath;
-    private final CreateMode mode;
     private final AtomicReference<byte[]> data = new AtomicReference<byte[]>();
     private final AtomicReference<State> state = new AtomicReference<State>(State.LATENT);
     private final AtomicBoolean authFailure = new AtomicBoolean(false);
@@ -97,9 +96,9 @@ public class NDPENode implements Closeable
             else
             {
                 boolean isEphemeral = event.getStat().getEphemeralOwner() != 0;
-                if ( isEphemeral != mode.isEphemeral() )
+                if ( !isEphemeral )
                 {
-                    log.warn("Existing node ephemeral state doesn't match requested state. Maybe the node was created outside of PersistentNode? " + basePath);
+                    log.warn("Existing node ephemeral state doesn't match requested state. Maybe the node was created outside of NDPENode? " + basePath);
                 }
             }
         }
@@ -182,17 +181,15 @@ public class NDPENode implements Closeable
 
     /**
      * @param client        client instance
-     * @param mode          creation mode
      * @param useProtection if true, call {@link CreateBuilder#withProtection()}
      * @param basePath the base path for the node
      * @param initData data for the node
      */
-    public NDPENode(CuratorFramework client, final CreateMode mode, boolean useProtection, final String basePath, byte[] initData)
+    public NDPENode(CuratorFramework client, boolean useProtection, final String basePath, byte[] initData)
     {
         this.useProtection = useProtection;
         this.client = Preconditions.checkNotNull(client, "client cannot be null");
         this.basePath = PathUtils.validatePath(basePath);
-        this.mode = Preconditions.checkNotNull(mode, "mode cannot be null");
         final byte[] data = Preconditions.checkNotNull(initData, "data cannot be null");
 
         backgroundCallback = new BackgroundCallback()
@@ -400,38 +397,13 @@ public class NDPENode implements Closeable
         {
             String existingPath = nodePath.get();
             String createPath = (existingPath != null && !useProtection) ? existingPath : basePath;
-            createMethod.withMode(getCreateMode(existingPath != null)).inBackground(backgroundCallback).forPath(createPath, data.get());
+            createMethod.withMode(CreateMode.EPHEMERAL).inBackground(backgroundCallback).forPath(createPath, data.get());
         }
         catch ( Exception e )
         {
             ThreadUtils.checkInterrupted(e);
             throw new RuntimeException("Creating node. BasePath: " + basePath, e);  // should never happen unless there's a programming error - so throw RuntimeException
         }
-    }
-
-    private CreateMode getCreateMode(boolean pathIsSet)
-    {
-        if ( pathIsSet )
-        {
-            switch ( mode )
-            {
-            default:
-            {
-                break;
-            }
-
-            case EPHEMERAL_SEQUENTIAL:
-            {
-                return CreateMode.EPHEMERAL;    // protection case - node already set
-            }
-
-            case PERSISTENT_SEQUENTIAL:
-            {
-                return CreateMode.PERSISTENT;    // protection case - node already set
-            }
-            }
-        }
-        return mode;
     }
 
     private void watchNode() throws Exception
