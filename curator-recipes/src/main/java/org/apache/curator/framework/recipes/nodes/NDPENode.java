@@ -81,6 +81,37 @@ public class NDPENode implements Closeable
             }
         }
     };
+    private final BackgroundCallback getDataCallback = new BackgroundCallback()
+    {
+        @Override
+        public void processResult(CuratorFramework client, CuratorEvent event) throws Exception
+        {
+            if ( event.getResultCode() == KeeperException.Code.OK.intValue() )
+            {
+                if ( Arrays.equals(event.getData(), data.get()) )
+                {
+                    String path = event.getPath();
+                    nodePath.set(path);
+                    allowedToOverwrite.set(true);
+                    watchNode();
+
+                    initialisationComplete();
+                }
+                else
+                {
+                    InitialCreateLatch localLatch = initialCreateLatch.get();
+                    if ( localLatch != null )
+                    {
+                        localLatch.nodeExists();
+                    }
+                }
+            }
+            else if ( event.getResultCode() == KeeperException.Code.NONODE.intValue() )
+            {
+                createNode();
+            }
+        }
+    };
     private final BackgroundCallback checkExistsCallback = new BackgroundCallback()
     {
         @Override
@@ -225,11 +256,9 @@ public class NDPENode implements Closeable
     {
         if ( event.getResultCode() == KeeperException.Code.NODEEXISTS.intValue() )
         {
-            InitialCreateLatch localLatch = initialCreateLatch.get();
-            if ( localLatch != null )
-            {
-                localLatch.nodeExists();
-            }
+            String existingPath = nodePath.get();
+            String getDataPath = existingPath != null ? existingPath : basePath;
+            client.getData().inBackground(getDataCallback).forPath(getDataPath);
             return;
         }
 
