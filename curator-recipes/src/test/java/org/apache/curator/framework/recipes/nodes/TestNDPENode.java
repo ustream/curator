@@ -396,6 +396,27 @@ public class TestNDPENode extends BaseClassForTests
         }
     }
 
+    @Test
+    public void testExistingWithSameData() throws Exception
+    {
+        final byte[] TEST_DATA = "hey".getBytes();
+
+        CuratorFramework curator = newCurator();
+        NDPENode node = new NDPENode(curator, PATH, TEST_DATA);
+        try
+        {
+            curator.create().creatingParentsIfNeeded().forPath(PATH, TEST_DATA);
+            node.start();
+            Assert.assertEquals(node.waitForInitialCreate(timing.forWaiting().seconds(), TimeUnit.SECONDS), NDPENode.CreateError.NONE);
+            node.close();
+            assertNodeDoesNotExist(curator, PATH);
+        }
+        finally
+        {
+            CloseableUtils.closeQuietly(node);
+        }
+    }
+
     private void assertNodeExists(CuratorFramework curator, String path) throws Exception
     {
         assertNotNull(path);
