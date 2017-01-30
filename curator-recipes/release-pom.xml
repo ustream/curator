@@ -20,29 +20,9 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
-    <parent>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>apache-curator</artifactId>
-        <version>2.11.1</version>
-    </parent>
-
+    <groupId>curator</groupId>
     <artifactId>curator-recipes</artifactId>
     <version>2.11.2-SNAPSHOT5</version>
-    <packaging>bundle</packaging>
-
-    <name>Curator Recipes</name>
-    <description>All of the recipes listed on the ZooKeeper recipes doc (except two phase commit).</description>
-    <inceptionYear>2011</inceptionYear>
-
-    <properties>
-        <osgi.import.package>
-            *
-        </osgi.import.package>
-        <osgi.export.package>
-            org.apache.curator.framework.recipes*;version="${project.version}";-noimport:=true
-        </osgi.export.package>
-    </properties>
 
     <dependencies>
         <dependency>
