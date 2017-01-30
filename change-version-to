@@ -1,0 +1,12 @@
+#!/bin/bash
+
+CURR=`cat VERSION`
+NEW="$1"
+
+FILES=`find . -name pom.xml -print`
+for F in $FILES
+do
+	sed -i '' "s_<version>$CURR</version>_<version>$NEW</version>_" $F
+done
+
+echo "$NEW" > VERSION

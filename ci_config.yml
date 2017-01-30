@@ -1,10 +1,11 @@
 buildrunner: 
-  script: mvn clean package -DskipTests
+  script: ./build
 releaserunner: 
-  script: mvn clean package -DskipTests
+  script: ./build
 environment_image: sjc-docker-registry.ustream-adm.in/build-tools/ci-base-images/jvm-trusty:latest
 extensions:
   archiva_uploader:
     repository: internal
     paths:
     - curator-recipes/target/curator-recipes-*.jar : curator/curator-recipes/${ReleaseVersion}
+    - curator-recipes/target/curator-recipes-*.pom : curator/curator-recipes/${ReleaseVersion}
