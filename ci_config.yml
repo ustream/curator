@@ -7,4 +7,4 @@ extensions:
   archiva_uploader:
     repository: internal
     paths:
-    - curator-recipes/target/curator-recipes-*.jar
+    - curator-recipes/target/curator-recipes-*.jar : curator/curator-recipes/${ReleaseVersion}
