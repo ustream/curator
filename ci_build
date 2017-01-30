@@ -1,5 +1,5 @@
 #!/bin/bash
 
-mvn clean package -DskipTests
+mvn clean package
 VERSION=`cat VERSION`
 cp curator-recipes/release-pom.xml curator-recipes/target/curator-recipes-$VERSION.pom
