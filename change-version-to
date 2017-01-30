@@ -9,4 +9,6 @@ do
 	sed -i '' "s_<version>$CURR</version>_<version>$NEW</version>_" $F
 done
 
+sed -i '' "s_<version>$CURR</version>_<version>$NEW</version>_" curator-recipes/release-pom.xml
+
 echo "$NEW" > VERSION

@@ -2,4 +2,4 @@
 
 mvn clean package -DskipTests
 VERSION=`cat VERSION`
-cp curator-recipes/pom.xml curator-recipes/target/curator-recipes-$VERSION.pom
+cp curator-recipes/release-pom.xml curator-recipes/target/curator-recipes-$VERSION.pom
