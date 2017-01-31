@@ -1,7 +1,7 @@
 buildrunner: 
   script: ./ci_build
 releaserunner: 
-  script: ./ci_build
+  script: ./ci_release
 environment_image: sjc-docker-registry.ustream-adm.in/build-tools/ci-base-images/jvm-trusty:latest
 extensions:
   archiva_uploader:
