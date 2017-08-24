@@ -9,3 +9,5 @@ extensions:
     paths:
     - curator-recipes/target/curator-recipes-*.jar : curator/curator-recipes/${ReleaseVersion}
     - curator-recipes/target/curator-recipes-*.pom : curator/curator-recipes/${ReleaseVersion}
+  sonarqube:
+    scan_branch: True
