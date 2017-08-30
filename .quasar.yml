@@ -11,3 +11,4 @@ extensions:
     - curator-recipes/target/curator-recipes-*.pom : curator/curator-recipes/${ReleaseVersion}
   sonarqube:
     scan_branch: True
+    sonar_sync: True
