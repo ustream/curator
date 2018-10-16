@@ -1,14 +1,46 @@
-buildrunner: 
-  script: ./ci_build
-releaserunner: 
-  script: ./ci_release
-environment_image: sjc-docker-registry.ustream-adm.in/build-tools/ci-base-images/jvm-trusty:latest
-extensions:
-  archiva_uploader:
-    repository: internal
-    paths:
-    - curator-recipes/target/curator-recipes-*.jar : curator/curator-recipes/${ReleaseVersion}
-    - curator-recipes/target/curator-recipes-*.pom : curator/curator-recipes/${ReleaseVersion}
-  sonarqube:
-    scan_branch: True
-    sonar_sync: True
+version: 2.0
+
+pipelines:
+  ci:
+    actions:
+      - type: script
+        options:
+          commands:
+            - ./ci_build
+        runtime:
+          type: docker
+          options:
+            image: registry.ng.bluemix.net/build_tools/ci-base-images/jvm-trusty:latest
+      - type: sonar
+        options:
+          properties:
+            sonar.exclusions: '**/target/**,**/src/test/**'
+    runif:
+      - ${Q_ENVIRONMENT}: ci
+        ${Q_BUILD_EVENT}:
+          not: tag
+
+  release:
+    extends: ci
+    actions:
+      - type: script
+        options:
+          commands:
+            - ./ci_release
+        runtime:
+          type: docker
+          options:
+            image: registry.ng.bluemix.net/build_tools/ci-base-images/jvm-trusty:latest
+      - type: archiva_uploader
+        options:
+          repository: internal
+          paths:
+            - curator-recipes/target/curator-recipes-*.jar:curator/curator-recipes/${RELEASE_VERSION}/curator-recipes-*.jar
+            - curator-recipes/target/curator-recipes-*.pom:curator/curator-recipes/${RELEASE_VERSION}/curator-recipes-*.pom
+      - type: sonar
+        options:
+          properties:
+            sonar.exclusions: '**/target/**,**/src/test/**'
+    runif:
+      - ${Q_BUILD_EVENT}: tag
+        ${Q_ENVIRONMENT}: ci
